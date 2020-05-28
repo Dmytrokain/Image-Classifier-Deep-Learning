@@ -73,6 +73,34 @@ def saved_model_present():
     return ("model.json" and "model.h5") in os.listdir("model/")
 
 
+def test(model, test_images, test_labels):
+    class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
+                   'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
+
+    results = {'T-shirt/top': [0, 0], 'Trouser': [0, 0], 'Pullover': [0, 0], 'Dress': [0, 0], 'Coat': [0, 0],
+               'Sandal': [0, 0], 'Shirt': [0, 0], 'Sneaker': [0, 0], 'Bag': [0, 0], 'Ankle boot': [0, 0]}
+
+    for i in range(0, 9900, 10):
+        img = test_images[i]
+        lable = test_labels[i]
+        img = (np.expand_dims(img, 0))
+        predictions_single = model.predict(img)
+
+        predictedLabel = np.argmax(predictions_single[0])
+
+        data = results[class_names[lable]]
+        if predictedLabel == lable:
+            data[1] += 1
+        else:
+            data[0] += 1
+        results[lable] = data
+        # print(i)
+    for key in results:
+        data = results[key]
+        persents = (data[1] * 100) / (data[0] + data[1])
+        print(key, ": ", persents, "% success")
+
+
 fashion_mnist = keras.datasets.fashion_mnist
 (train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
 
@@ -83,6 +111,7 @@ if saved_model_present():
     loss_data = loss_data_from_json()
     loss, accuracy = loss_data['loss'], loss_data['accuracy']
 
+    test(model, test_images, test_labels)
     plot_loss_function(loss, accuracy)
 else:
     model = create_model()
